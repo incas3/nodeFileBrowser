@@ -26,7 +26,7 @@ app.use(express.cookieParser(conf.cookieSecret || 'pikachu'));
 app.use(express.bodyParser());
 app.use(express.static('public/'));
 app.use(express.favicon(__dirname + '/public/favicon.ico', { maxAge: 2592000000 }));
-app.listen(8092);
+app.listen(80);
 
 filePath = conf.filePath;
 route = conf.route;
@@ -136,7 +136,7 @@ app.get('/*',verify, function (req,res) {
                   var obj = {
                     list: _list, path: [{link: '/', name: homeName }], total:_list.length
                   }
-                  
+                 
                   var tempPath = '/';
                   for (var _i = 0; _i < req._PATH.length; _i++)
                     obj.path.push({link:tempPath+=req._PATH[_i] + '/', name:req._PATH[_i]});
@@ -167,7 +167,8 @@ app.get('/*',verify, function (req,res) {
           else {
             res.writeHead(200, {
               'Content-Type': result,
-              'Content-Length': stats.size
+              'Content-Length': stats.size,
+              'Content-Disposition': 'attachment;filename=' + req._PATHSTR
             });
             var readStream = fs.createReadStream(filePath + req._PATHSTR);
             readStream.pipe(res);
