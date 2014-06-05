@@ -47,3 +47,7 @@ ul li.fileListItem.hiddenFolder {
   color: #A7A7A7;
 }
 
+.inlinedate {
+  margin-right: 20px;
+  color: #666;
+}

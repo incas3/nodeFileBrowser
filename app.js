@@ -96,9 +96,9 @@ app.get('/log', function(req,res){
 });
 
 app.get('/*',verify, function (req,res) {
-  if (!req.signedCookies.isCool){
-    res.redirect('/login');
-  } else {
+  //if (!req.signedCookies.isCool){
+  //  res.redirect('/login');
+  //} else {
     fs.stat(filePath + req._PATHSTR , function(err, stats){
       if (err) {
         if (err.code == 'ENOENT') res.send(['Doesn\'t Exist']);
@@ -111,7 +111,7 @@ app.get('/*',verify, function (req,res) {
           for (var i = 0; i < files.length; i++){
             var _url = '';
             if (hidden(/^\./,files[i])) {
-              _list.push({name:files[i],type:'',size:0,path:req._PATHSTR+'/'+files[i]});
+              _list.push({name:files[i],type:'',size:0,path:req._PATHSTR+'/'+files[i], date:'bla' });
             }
           }
 
@@ -124,6 +124,7 @@ app.get('/*',verify, function (req,res) {
           function getFileStats(count, _file){
             _file.stat(filePath + _list[count].path, function(err, fileStat){
               _list[count].size = humanize.filesize(fileStat.size);
+              _list[count].date = fileStat.ctime;
             });
             
             magic.detectFile(filePath + _list[count].path, function(err, result){
@@ -187,7 +188,7 @@ app.get('/*',verify, function (req,res) {
         });
       }
     });
-  }
+  //}
 });
 
 function buildPath(req,res,next){
