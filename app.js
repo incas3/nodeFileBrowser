@@ -25,6 +25,7 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 app.use(express.cookieParser(conf.cookieSecret || 'pikachu'));
 app.use(express.bodyParser());
+app.use(express.methodOverride());
 app.use(express.static('public/'));
 app.use(express.favicon(__dirname + '/public/favicon.ico', { maxAge: 2592000000 }));
 app.listen(8092);
@@ -35,7 +36,7 @@ allowHidden = conf.allowHidden;
 allowSym = conf.allowSym;
 api = conf.api;
 homeName = conf.homeName;
- 
+
 var verify = [buildPath,symmCheck];  //middleware
 
 app.get('/robots.txt', function(req, res){
@@ -64,8 +65,8 @@ app.post('/login', function(req,res){
     res.redirect('/');
   } else {
     res.render('login', {
-      title:"Wrong", 
-      msg:"Leave the form blank. Trust me, I'm an engineer.", 
+      title:"Wrong",
+      msg:"Leave the form blank. Trust me, I'm an engineer.",
       type:"alert-danger",
       email: req.body.email || ''
     });
@@ -96,6 +97,28 @@ app.get('/log', function(req,res){
   });
 });
 
+app.del('/*',verify, function(req,res) {
+  console.log(res);
+  fs.stat(filePath + req._PATHSTR , function(err, stats){
+    if (err) {
+      if (err.code == 'ENOENT') res.send(['Doesn\'t Exist']);
+      else throw err;
+    }else if (stats.isFile()){
+      magic.detectFile(filePath + req._PATHSTR, function(err,result){
+        if (err) throw err;
+        else {
+          fs.unlink(filePath + req._PATHSTR,function(err) {
+            if (err) res.send(500);
+            console.log("Deleted file " + filePath + req._PATHSTR);
+            res.send(200);
+          });
+
+        }
+      });
+    }
+  });
+});
+
 app.get('/*',verify, function (req,res) {
   //if (!req.signedCookies.isCool){
   //  res.redirect('/login');
@@ -107,6 +130,7 @@ app.get('/*',verify, function (req,res) {
       }
       else if (stats.isDirectory()) {
         fs.readdir(filePath + req._PATHSTR, function(err, files){
+
           var _list = [];
           files = files.sort();
           for (var i = 0; i < files.length; i++){
@@ -114,6 +138,24 @@ app.get('/*',verify, function (req,res) {
             if (hidden(/^\./,files[i])) {
               _list.push({name:files[i],type:'',size:0,path:req._PATHSTR+'/'+files[i], date:'bla' });
             }
+          }
+          console.log("error listing " + _list.length);
+          if (_list.length == 0) {
+            var obj = {list:0,total:0,path: [{link: '/', name: homeName }]};
+            obj.helpers = {
+              foreach: function(arr, options) {
+                if(options.inverse && !arr.length)
+                  return options.inverse(this);
+
+                return arr.map(function(item,index) {
+                  item.$index = index;
+                  item.$first = index === 0;
+                  item.$last  = index === arr.length-1;
+                  return options.fn(item);
+                }).join('');
+              }
+            };
+            res.render('index',obj);
           }
 
           var _count = 0, _mmmCount=0;
@@ -127,8 +169,9 @@ app.get('/*',verify, function (req,res) {
               _list[count].size = humanize.filesize(fileStat.size);
               _list[count].date = fileStat.ctime;
             });
-            
+
             magic.detectFile(filePath + _list[count].path, function(err, result){
+              console.log("error listing " + err);
               _list[count].type = result.split('/')[1];
               _mmmCount++; //TODO: ASYNC Rocks! #Clean this up later.
               if (_mmmCount == _list.length){
@@ -137,7 +180,7 @@ app.get('/*',verify, function (req,res) {
                   var obj = {
                     list: _list, path: [{link: '/', name: homeName }], total:_list.length
                   }
-                 
+
                   var tempPath = '/';
                   for (var _i = 0; _i < req._PATH.length; _i++)
                     obj.path.push({link:tempPath+=req._PATH[_i] + '/', name:req._PATH[_i]});
@@ -164,7 +207,7 @@ app.get('/*',verify, function (req,res) {
         });
       } else if (stats.isFile()){
         magic.detectFile(filePath + req._PATHSTR, function(err,result){
-          if (err) throw err; 
+          if (err) throw err;
           else {
             res.writeHead(200, {
               'Content-Type': result,
@@ -237,6 +280,8 @@ function symmCheck(req,res,next){
   }
   else next();
 }
+
+
 
 function hidden(exp,str){
   if (allowHidden) return true;

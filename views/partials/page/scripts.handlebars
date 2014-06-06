@@ -1,2 +1,17 @@
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/scripts/jquery-2.1.1.min.js"></script>
 <script src="/scripts/bootstrap.min.js"></script>
+<script charset="utf-8">
+function delete_file(path) {
+  if (window.confirm("Are you sure?")) {
+    $.ajax({
+      url: path,
+      type: 'DELETE',
+      success: function(result) {
+          // Do something with the result
+          location.reload();
+      }
+    });
+
+  }
+}
+</script>

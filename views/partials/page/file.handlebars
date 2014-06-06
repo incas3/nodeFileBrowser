@@ -3,7 +3,11 @@
     <a href="{{path}}">
       {{name}}
     </a>
+
+    <a class="delete pull-right " href="#" onclick="delete_file('{{path}}')">Delete</a>
     <span class="pull-right hidden-xs">{{date}}</span>
+
     <span class="inlinedate pull-right hidden-xs">{{size}}</span>
+
   </li>
 {{/if}}
