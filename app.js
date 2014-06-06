@@ -1,6 +1,7 @@
 var express = require('express'),
     exphbs = require('express3-handlebars'),
     fs = require('fs'),
+    path = require('path'),
     util = require('util'),
     humanize = require('humanize'),
     mime = require('./lib/mimetypes'),
@@ -26,7 +27,7 @@ app.use(express.cookieParser(conf.cookieSecret || 'pikachu'));
 app.use(express.bodyParser());
 app.use(express.static('public/'));
 app.use(express.favicon(__dirname + '/public/favicon.ico', { maxAge: 2592000000 }));
-app.listen(80);
+app.listen(8092);
 
 filePath = conf.filePath;
 route = conf.route;
@@ -168,12 +169,13 @@ app.get('/*',verify, function (req,res) {
             res.writeHead(200, {
               'Content-Type': result,
               'Content-Length': stats.size,
-              'Content-Disposition': 'attachment;filename=' + req._PATHSTR
+              'Content-Disposition': 'attachment;filename=' + path.basename(req._PATHSTR)
             });
             var readStream = fs.createReadStream(filePath + req._PATHSTR);
             readStream.pipe(res);
             var str = Date.now() +' | ' + req.connection.remoteAddress + ' | ' + filePath + req._PATHSTR;
             //console.log(str);
+            console.log(path.basename(req._PATHSTR));
             if (fs.existsSync('log.txt')){
               fs.appendFile('log.txt', str + '\n', function(err){
                 if (err) throw err;
